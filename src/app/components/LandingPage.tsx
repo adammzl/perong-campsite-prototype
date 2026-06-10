@@ -247,7 +247,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             <div className="flex items-start gap-3 mb-5">
               <MapPin size={20} className="text-primary mt-1 shrink-0" />
               <p className="text-muted-foreground leading-relaxed">
-                Perong Campsite, Jalan Hutan Simpan, KM 42, Cameron Highlands, Pahang, Malaysia, 39000
+                Perong Campsite, V2VP+M5, 26200 Sungai Lembing, Pahang
               </p>
             </div>
             <div className="flex items-center gap-3 mb-5">
