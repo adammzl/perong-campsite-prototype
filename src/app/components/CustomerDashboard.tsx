@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 import {
   TreePine, MapPin, Users, Calendar, CreditCard, CheckCircle, Clock,
-  LogOut, Star, ChevronRight, X, MessageSquare, CalendarCheck,
-  Info, ChevronDown, ChevronUp, XCircle, AlertCircle,
+  LogOut, Star, ChevronRight, X,
+  ChevronDown, XCircle,
 } from "lucide-react";
 import type {
   Campsite, Booking, Payment, Activity, Equipment,
@@ -43,6 +43,21 @@ function RefreshCwIcon({ size = 16, className = "" }: { size?: number; className
 }
 function TentIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 20 L12 4 L21 20 Z"/><path d="M9 20 L12 15 L15 20"/></svg>;
+}
+function CalendarCheckIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>;
+}
+function MessageSquareIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
+}
+function InfoIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>;
+}
+function ChevronUpIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="18 15 12 9 6 15"/></svg>;
+}
+function AlertCircleIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
 }
 
 interface CustomerDashboardProps {
@@ -234,7 +249,7 @@ function NotificationBanner({ bookings, onAcceptReschedule, onDeclineReschedule,
         const isActionable = b.status === "Rescheduled" || b.status === "Rejected";
         const bgClass = isActionable ? (b.status === "Rescheduled" ? "border-purple-300 bg-purple-50" : "border-destructive/30 bg-destructive/5")
           : isCheckInDue ? "border-emerald-300 bg-emerald-50" : "border-blue-300 bg-blue-50";
-        const icon = isActionable ? (b.status === "Rescheduled" ? <CalendarCheck size={18} className="text-purple-600 shrink-0 mt-0.5" /> : <XCircle size={18} className="text-destructive shrink-0 mt-0.5" />)
+        const icon = isActionable ? (b.status === "Rescheduled" ? <CalendarCheckIcon size={18} className="text-purple-600 shrink-0 mt-0.5" /> : <XCircle size={18} className="text-destructive shrink-0 mt-0.5" />)
           : isCheckInDue ? <LogInIcon size={18} className="text-emerald-600 shrink-0 mt-0.5" /> : <LogOutIcon size={18} className="text-blue-600 shrink-0 mt-0.5" />;
         const title = isActionable ? (b.status === "Rescheduled" ? "Your booking has been rescheduled" : "Your booking was not approved")
           : isCheckInDue ? "Time to check in!" : "Time to check out!";
@@ -245,12 +260,12 @@ function NotificationBanner({ bookings, onAcceptReschedule, onDeclineReschedule,
                 <div><p className="text-sm font-medium text-foreground">{title}</p><p className="text-xs text-muted-foreground mt-0.5">{b.site} · {b.id}</p></div>
               </div>
               <button onClick={() => setExpanded(p => ({ ...p, [b.id]: !p[b.id] }))} className="text-muted-foreground hover:text-foreground shrink-0">
-                {expanded[b.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {expanded[b.id] ? <ChevronUpIcon size={16} /> : <ChevronDown size={16} />}
               </button>
             </div>
             {expanded[b.id] && (
               <div className="px-5 pb-4 border-t border-current/10">
-                {b.staffFeedback && <div className="bg-white/60 rounded-lg p-3 my-3"><p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><MessageSquare size={11} /> Staff note</p><p className="text-sm text-foreground">{b.staffFeedback}</p></div>}
+                {b.staffFeedback && <div className="bg-white/60 rounded-lg p-3 my-3"><p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><MessageSquareIcon size={11} /> Staff note</p><p className="text-sm text-foreground">{b.staffFeedback}</p></div>}
                 {b.status === "Rescheduled" && b.suggestedCheckIn && (
                   <div className="bg-white/60 rounded-lg p-3 mb-3"><p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Calendar size={11} /> Suggested new dates</p>
                     <p className="text-sm text-foreground font-medium">{fmtDate(b.suggestedCheckIn)} → {fmtDate(b.suggestedCheckOut)}</p>
@@ -476,7 +491,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                       {site.available ? "Available" : "Unavailable"}
                     </span>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-medium bg-black/50 px-3 py-1.5 rounded-full flex items-center gap-1.5"><Info size={13} /> View details</span>
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-medium bg-black/50 px-3 py-1.5 rounded-full flex items-center gap-1.5"><InfoIcon size={13} /> View details</span>
                     </div>
                   </div>
                   <div className="p-5">
@@ -550,7 +565,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><AlertCircle size={11} /> Vehicle plate and count are mandatory for site access.</p>
+                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><AlertCircleIcon size={11} /> Vehicle plate and count are mandatory for site access.</p>
                 <div className="bg-muted rounded-lg p-4 mt-5 flex items-center justify-between">
                   <div><p className="text-sm text-muted-foreground">{nights} night{nights>1?"s":""} · {form.guests} pax</p>
                     <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground">RM {siteCost}.00 site</p></div>
@@ -674,7 +689,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                 <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-accent text-sm mb-6">Ref: {lastBookingId} · RM {lastBookingTotal}.00</p>
                 <div className="flex gap-3 justify-center">
                   <button onClick={() => { setPayingForId(lastBookingId); setPayStep("method"); setPayProofNote(""); setTab("payment"); }}
-                    className="bg-destructive text-white px-6 py-2 rounded-lg text-sm hover:opacity-90 font-semibold flex items-center gap-2"><AlertCircle size={15} /> Pay Now</button>
+                    className="bg-destructive text-white px-6 py-2 rounded-lg text-sm hover:opacity-90 font-semibold flex items-center gap-2"><AlertCircleIcon size={15} /> Pay Now</button>
                   <button onClick={() => { setBookingStep("site"); setSelectedSite(null); setSelectedActivities([]); setSelectedEquipment([]); setTab("browse"); }}
                     className="border border-border text-foreground px-6 py-2 rounded-lg text-sm hover:bg-muted">Back to Browse</button>
                 </div>
@@ -822,14 +837,14 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                   )}
                   {b.staffFeedback && (b.status === "Rejected" || b.status === "Rescheduled") && (
                     <div className="mt-2 pt-2 border-t border-border">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1"><MessageSquare size={11} /> Staff note</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1"><MessageSquareIcon size={11} /> Staff note</p>
                       <p className="text-sm text-foreground">{b.staffFeedback}</p>
                     </div>
                   )}
                   <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-border">
                     {b.paymentStatus === "Unpaid" && !["Rejected","Rescheduled","Declined"].includes(b.status) && (
                       <button onClick={() => handleGoToPay(b.id)} className="flex items-center gap-2 bg-destructive text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-destructive/90 animate-pulse">
-                        <AlertCircle size={13} /> Pending Payment
+                        <AlertCircleIcon size={13} /> Pending Payment
                       </button>
                     )}
                     {b.paymentStatus === "Verified" && (b.status === "Rejected" || b.status === "Rescheduled") && (

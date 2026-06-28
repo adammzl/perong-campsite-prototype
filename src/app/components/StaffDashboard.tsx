@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import {
   TreePine, Users, Calendar, CreditCard, CheckCircle, Clock, LogOut,
-  TrendingUp, AlertTriangle, Edit2, X, XCircle, MessageSquare,
-  ChevronDown, ChevronUp, MapPin,
+  TrendingUp, AlertTriangle, Edit2, X, XCircle,
+  ChevronDown, MapPin,
 } from "lucide-react";
 import type { Campsite, Booking, Payment, Activity, Equipment, RefundRequest, Invoice } from "../App";
 import { saveData } from "../App";
@@ -32,6 +32,12 @@ type ActionType = "approve" | "reject" | "reschedule";
 // ─── Inline SVG icons (safe replacements for missing lucide icons) ─────────────
 function CheckIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12" /></svg>;
+}
+function ChevronUpIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="18 15 12 9 6 15" /></svg>;
+}
+function MessageSquareIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>;
 }
 function PlusIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
@@ -877,7 +883,7 @@ export function StaffDashboard({
                       </div>
                     )}
                     {b.staffFeedback && (
-                      <div className="bg-muted rounded-lg p-3 mb-3"><p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><MessageSquare size={11} /> Staff note sent</p><p className="text-sm text-foreground">{b.staffFeedback}</p></div>
+                      <div className="bg-muted rounded-lg p-3 mb-3"><p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><MessageSquareIcon size={11} /> Staff note sent</p><p className="text-sm text-foreground">{b.staffFeedback}</p></div>
                     )}
                     {b.status === "Rescheduled" && b.suggestedCheckIn && (
                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3 text-sm">
