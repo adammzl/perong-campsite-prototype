@@ -1,16 +1,49 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   TreePine, MapPin, Users, Calendar, CreditCard, CheckCircle, Clock,
-  LogOut, Star, Tent, ChevronRight, X, MessageSquare, CalendarCheck,
-  RefreshCw, Info, ChevronDown, ChevronUp, XCircle, AlertCircle,
-  Banknote, ArrowLeftRight, Upload, Car, Package, Activity as ActivityIcon,
-  LogIn, LogOut as LogOutIcon, Bell,
+  LogOut, Star, ChevronRight, X, MessageSquare, CalendarCheck,
+  Info, ChevronDown, ChevronUp, XCircle, AlertCircle,
 } from "lucide-react";
 import type {
   Campsite, Booking, Payment, Activity, Equipment,
-  BookingActivity, BookingEquipment, RefundRequest,
+  BookingActivity, BookingEquipment, RefundRequest, Invoice,
 } from "../App";
 import { saveData } from "../App";
+
+// ─── Inline SVG icons (lucide version-safe) ────────────────────────────────────
+function BanknoteIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>;
+}
+function ArrowLeftRightIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="17 8 21 12 17 16"/><line x1="3" y1="12" x2="21" y2="12"/><polyline points="7 8 3 12 7 16"/></svg>;
+}
+function UploadIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>;
+}
+function CarIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>;
+}
+function PackageIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>;
+}
+function ActivityIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+}
+function LogInIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>;
+}
+function LogOutIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+}
+function CheckInlineIcon({ size = 12, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>;
+}
+function RefreshCwIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>;
+}
+function TentIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 20 L12 4 L21 20 Z"/><path d="M9 20 L12 15 L15 20"/></svg>;
+}
 
 interface CustomerDashboardProps {
   userName: string;
@@ -26,6 +59,8 @@ interface CustomerDashboardProps {
   setPayments: (p: Payment[]) => void;
   refunds: RefundRequest[];
   setRefunds: (r: RefundRequest[]) => void;
+  invoices: Invoice[];
+  setInvoices: (i: Invoice[]) => void;
 }
 
 type TabId = "browse" | "booking" | "payment" | "mybookings";
@@ -117,7 +152,7 @@ function RefundModal({ booking, onClose, onSubmit }: { booking: Booking; onClose
       <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center"><Banknote size={18} className="text-destructive" /></div>
+            <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center"><BanknoteIcon size={18} className="text-destructive" /></div>
             <div>
               <h3 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg">{step === "done" ? "Refund Requested" : "Request a Refund"}</h3>
               <p className="text-xs text-muted-foreground mt-0.5">{booking.id} · {booking.site}</p>
@@ -139,7 +174,7 @@ function RefundModal({ booking, onClose, onSubmit }: { booking: Booking; onClose
             </div>
           </div>
           <button onClick={() => setStep("method")} className="w-full bg-primary text-primary-foreground py-3 rounded-lg text-sm hover:opacity-90 flex items-center justify-center gap-2">
-            <ArrowLeftRight size={15} /> Select Refund Method
+            <ArrowLeftRightIcon size={15} /> Select Refund Method
           </button>
         </>)}
         {step === "method" && (<>
@@ -200,7 +235,7 @@ function NotificationBanner({ bookings, onAcceptReschedule, onDeclineReschedule,
         const bgClass = isActionable ? (b.status === "Rescheduled" ? "border-purple-300 bg-purple-50" : "border-destructive/30 bg-destructive/5")
           : isCheckInDue ? "border-emerald-300 bg-emerald-50" : "border-blue-300 bg-blue-50";
         const icon = isActionable ? (b.status === "Rescheduled" ? <CalendarCheck size={18} className="text-purple-600 shrink-0 mt-0.5" /> : <XCircle size={18} className="text-destructive shrink-0 mt-0.5" />)
-          : isCheckInDue ? <LogIn size={18} className="text-emerald-600 shrink-0 mt-0.5" /> : <LogOutIcon size={18} className="text-blue-600 shrink-0 mt-0.5" />;
+          : isCheckInDue ? <LogInIcon size={18} className="text-emerald-600 shrink-0 mt-0.5" /> : <LogOutIcon size={18} className="text-blue-600 shrink-0 mt-0.5" />;
         const title = isActionable ? (b.status === "Rescheduled" ? "Your booking has been rescheduled" : "Your booking was not approved")
           : isCheckInDue ? "Time to check in!" : "Time to check out!";
         return (
@@ -223,9 +258,9 @@ function NotificationBanner({ bookings, onAcceptReschedule, onDeclineReschedule,
                 )}
                 <div className="flex flex-wrap gap-2 mt-3">
                   {b.status === "Rescheduled" && <button onClick={() => onAcceptReschedule(b.id)} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-purple-700 flex items-center gap-1.5"><CheckCircle size={13} /> Accept new dates</button>}
-                  {isActionable && <button onClick={() => onDeclineReschedule(b.id)} className="border border-border text-foreground px-4 py-2 rounded-lg text-xs hover:bg-muted flex items-center gap-1.5"><RefreshCw size={13} /> Make new booking</button>}
-                  {isActionable && b.paymentStatus === "Verified" && <button onClick={() => onRequestRefund(b)} className="bg-destructive/10 text-destructive border border-destructive/30 px-4 py-2 rounded-lg text-xs font-medium hover:bg-destructive/20 flex items-center gap-1.5"><Banknote size={13} /> Request Refund</button>}
-                  {isCheckInDue && <button onClick={() => onCheckIn(b.id)} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-emerald-700 flex items-center gap-1.5"><LogIn size={13} /> Check In Now</button>}
+                  {isActionable && <button onClick={() => onDeclineReschedule(b.id)} className="border border-border text-foreground px-4 py-2 rounded-lg text-xs hover:bg-muted flex items-center gap-1.5"><RefreshCwIcon size={13} /> Make new booking</button>}
+                  {isActionable && b.paymentStatus === "Verified" && <button onClick={() => onRequestRefund(b)} className="bg-destructive/10 text-destructive border border-destructive/30 px-4 py-2 rounded-lg text-xs font-medium hover:bg-destructive/20 flex items-center gap-1.5"><BanknoteIcon size={13} /> Request Refund</button>}
+                  {isCheckInDue && <button onClick={() => onCheckIn(b.id)} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-emerald-700 flex items-center gap-1.5"><LogInIcon size={13} /> Check In Now</button>}
                   {isCheckOutDue && <button onClick={() => onCheckOut(b.id)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-blue-700 flex items-center gap-1.5"><LogOutIcon size={13} /> Check Out Now</button>}
                 </div>
               </div>
@@ -240,7 +275,7 @@ function NotificationBanner({ bookings, onAcceptReschedule, onDeclineReschedule,
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN CUSTOMER DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
-export function CustomerDashboard({ userName, userEmail, onLogout, campsites, activities, equipment, setEquipment, bookings, setBookings, payments, setPayments, refunds, setRefunds }: CustomerDashboardProps) {
+export function CustomerDashboard({ userName, userEmail, onLogout, campsites, activities, equipment, setEquipment, bookings, setBookings, payments, setPayments, refunds, setRefunds, invoices, setInvoices }: CustomerDashboardProps) {
   const [tab, setTab] = useState<TabId>("browse");
   const [popupSite, setPopupSite] = useState<Campsite | null>(null);
   const [refundBooking, setRefundBooking] = useState<Booking | null>(null);
@@ -258,7 +293,10 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
   const [payStep, setPayStep] = useState<PayStep>("method");
   const [payMethod, setPayMethod] = useState("fpx");
   const [payProofNote, setPayProofNote] = useState("");
+  const [payProofImage, setPayProofImage] = useState<string>(""); // base64
+  const [payProofFileName, setPayProofFileName] = useState<string>("");
   const [payingForId, setPayingForId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const myBookings = bookings.filter(b => b.ownerId === userEmail);
   const today = todayStr();
@@ -322,7 +360,18 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
   };
 
   const handleGoToPay = (bookingId: string) => {
-    setPayingForId(bookingId); setPayStep("method"); setPayProofNote(""); setTab("payment");
+    setPayingForId(bookingId); setPayStep("method"); setPayProofNote(""); setPayProofImage(""); setPayProofFileName(""); setTab("payment");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Limit to 4MB
+    if (file.size > 4 * 1024 * 1024) { alert("File too large. Please upload an image under 4MB."); return; }
+    setPayProofFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => { setPayProofImage(ev.target?.result as string ?? ""); };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmitPayment = () => {
@@ -330,7 +379,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
     if (!bk) return;
     const newPaymentId = genId("PAY");
     const updatedBookings = bookings.map(b => b.id === payingForId ? { ...b, paymentStatus: "ProofSubmitted" as const, paymentMethod: payMethod, paymentProofNote: payProofNote, paymentDate: today } : b);
-    const newPayment: Payment = { id: newPaymentId, bookingId: payingForId!, guest: bk.guest, amount: bk.total, method: payMethod, proofNote: payProofNote, date: today, status: "Pending" };
+    const newPayment: Payment = { id: newPaymentId, bookingId: payingForId!, guest: bk.guest, amount: bk.total, method: payMethod, proofNote: payProofNote, proofImage: payProofImage, date: today, status: "Pending" };
     const updatedPayments = [...payments.filter(p => p.bookingId !== payingForId), newPayment];
     setBookings(updatedBookings); saveData("pc_bookings", updatedBookings);
     setPayments(updatedPayments); saveData("pc_payments", updatedPayments);
@@ -461,7 +510,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
 
             {!selectedSite ? (
               <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <Tent size={40} className="text-muted-foreground mx-auto mb-4" />
+                <TentIcon size={40} className="text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">No campsite selected yet.</p>
                 <button onClick={() => setTab("browse")} className="bg-primary text-primary-foreground px-6 py-2 rounded-lg text-sm hover:opacity-90">Browse Campsites</button>
               </div>
@@ -492,9 +541,9 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                   <div><label className="block text-sm text-foreground mb-1">Phone <span className="text-destructive">*</span></label>
                     <input type="tel" placeholder="+60 12-345 6789" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring" /></div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-sm text-foreground mb-1 flex items-center gap-1"><Car size={13} /> Vehicle Plate <span className="text-destructive">*</span></label>
+                    <div><label className="block text-sm text-foreground mb-1 flex items-center gap-1"><CarIcon size={13} /> Vehicle Plate <span className="text-destructive">*</span></label>
                       <input type="text" placeholder="e.g. WXY 1234" value={form.vehiclePlate} onChange={e => setForm({...form, vehiclePlate: e.target.value.toUpperCase()})} className="w-full px-3 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring uppercase" /></div>
-                    <div><label className="block text-sm text-foreground mb-1 flex items-center gap-1"><Car size={13} /> No. of Vehicles <span className="text-destructive">*</span></label>
+                    <div><label className="block text-sm text-foreground mb-1 flex items-center gap-1"><CarIcon size={13} /> No. of Vehicles <span className="text-destructive">*</span></label>
                       <select value={form.vehicleCount} onChange={e => setForm({...form, vehicleCount: e.target.value})} className="w-full px-3 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                         {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} vehicle{n>1?"s":""}</option>)}
                       </select>
@@ -502,7 +551,6 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><AlertCircle size={11} /> Vehicle plate and count are mandatory for site access.</p>
-                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><AlertCircle size={11} /> If multiple vehicles are present, add a coma(,) before typing the next plate number.</p>
                 <div className="bg-muted rounded-lg p-4 mt-5 flex items-center justify-between">
                   <div><p className="text-sm text-muted-foreground">{nights} night{nights>1?"s":""} · {form.guests} pax</p>
                     <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground">RM {siteCost}.00 site</p></div>
@@ -525,7 +573,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                         <button key={act.id} onClick={() => toggleActivity(act)}
                           className={`w-full flex items-start gap-4 px-4 py-4 rounded-lg border transition-colors text-left ${selected ? "border-primary bg-primary/5" : "border-border hover:bg-muted"}`}>
                           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 ${selected ? "border-primary bg-primary" : "border-muted-foreground"}`}>
-                            {selected && <Check size={12} className="text-white" />}
+                            {selected && <CheckInlineIcon size={12} className="text-white" />}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
@@ -543,7 +591,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
 
                 {/* Equipment Rental */}
                 <div className="bg-card border border-border rounded-xl p-6">
-                  <h3 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 600 }} className="text-foreground mb-1 flex items-center gap-2"><Package size={16} /> Tent & Equipment Rental</h3>
+                  <h3 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 600 }} className="text-foreground mb-1 flex items-center gap-2"><PackageIcon size={16} /> Tent & Equipment Rental</h3>
                   <p className="text-xs text-muted-foreground mb-4">Optional — items are rented per night. Each item has its own ID.</p>
                   {(["tent","equipment"] as const).map(cat => (
                     <div key={cat} className="mb-4">
@@ -555,7 +603,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                             <button key={eq.id} onClick={() => toggleEquipment(eq)}
                               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors text-left ${sel ? "border-primary bg-primary/5" : "border-border hover:bg-muted"}`}>
                               <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${sel ? "border-primary bg-primary" : "border-muted-foreground"}`}>
-                                {sel && <Check size={10} className="text-white" />}
+                                {sel && <CheckInlineIcon size={10} className="text-white" />}
                               </div>
                               <div className="flex-1 flex items-center justify-between">
                                 <div>
@@ -674,20 +722,55 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
             ) : payStep === "proof" ? (
               <div className="bg-card border border-border rounded-xl p-6 mt-4">
                 <div className="flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-lg px-4 py-3 mb-5">
-                  <Upload size={16} className="text-accent shrink-0" />
-                  <p className="text-sm text-foreground">Upload your payment proof so staff can verify your payment.</p>
+                  <UploadIcon size={16} className="text-accent shrink-0" />
+                  <p className="text-sm text-foreground">Attach your payment receipt so staff can verify your payment.</p>
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">Describe your payment proof (e.g. transaction reference, bank receipt):</p>
-                <textarea value={payProofNote} onChange={e => setPayProofNote(e.target.value)} rows={4}
-                  placeholder={`e.g. Transferred RM ${payingForBooking?.total ?? "—"}.00 via Maybank2u at 3:15 PM, ref TXN-${Math.floor(Math.random()*900000+100000)}`}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none mb-5" />
+
+                {/* Hidden file input */}
+                <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleFileUpload} className="hidden" />
+
+                {/* Upload area */}
+                <div className="mb-5">
+                  <label className="block text-sm text-foreground mb-2">
+                    Upload Receipt / Screenshot <span className="text-muted-foreground text-xs">(JPG, PNG — max 4MB)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`w-full border-2 border-dashed rounded-xl py-6 flex flex-col items-center gap-2 transition-colors cursor-pointer ${payProofImage ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-muted"}`}
+                  >
+                    {payProofImage ? (
+                      <>
+                        <img src={payProofImage} alt="Receipt preview" className="max-h-40 max-w-full object-contain rounded-lg mb-1" />
+                        <p className="text-xs text-primary font-medium">{payProofFileName}</p>
+                        <p className="text-xs text-muted-foreground">Click to change</p>
+                      </>
+                    ) : (
+                      <>
+                        <UploadIcon size={28} className="text-muted-foreground" />
+                        <p className="text-sm text-foreground font-medium">Click to upload receipt</p>
+                        <p className="text-xs text-muted-foreground">Supports JPG, PNG images</p>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Notes */}
+                <div className="mb-5">
+                  <label className="block text-sm text-foreground mb-2">Additional notes <span className="text-muted-foreground text-xs">(optional)</span></label>
+                  <textarea value={payProofNote} onChange={e => setPayProofNote(e.target.value)} rows={3}
+                    placeholder={`e.g. Transferred RM ${payingForBooking?.total ?? "—"}.00 via Maybank2u, ref TXN-XXXXXX`}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                </div>
+
                 <div className="bg-muted rounded-lg p-4 flex justify-between items-center mb-5">
-                  <span className="text-sm text-muted-foreground">Amount</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground">RM {payingForBooking?.total ?? "—"}.00</span>
+                  <span className="text-sm text-muted-foreground">Amount Due</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground font-semibold">RM {payingForBooking?.total ?? "—"}.00</span>
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => setPayStep("method")} className="flex-1 border border-border text-foreground py-2 rounded-lg text-sm hover:bg-muted">Back</button>
-                  <button onClick={handleSubmitPayment} disabled={!payProofNote.trim()} className="flex-1 bg-accent text-accent-foreground py-2 rounded-lg text-sm hover:opacity-90 disabled:opacity-40">Submit Payment</button>
+                  <button onClick={handleSubmitPayment} disabled={!payProofImage && !payProofNote.trim()}
+                    className="flex-1 bg-accent text-accent-foreground py-2 rounded-lg text-sm hover:opacity-90 disabled:opacity-40">Submit Payment</button>
                 </div>
               </div>
             ) : (
@@ -724,7 +807,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-muted-foreground border-t border-border pt-3 mb-3">
                     <span className="flex items-center gap-1"><Calendar size={11} />{b.dates}</span>
                     <span className="flex items-center gap-1"><Users size={11} />{b.guests} guests</span>
-                    <span className="flex items-center gap-1"><Car size={11} />{b.vehiclePlate}</span>
+                    <span className="flex items-center gap-1"><CarIcon size={11} />{b.vehiclePlate}</span>
                     <span style={{ fontFamily: "'DM Mono',monospace" }} className="flex items-center gap-1"><CreditCard size={11} />RM {b.total}</span>
                   </div>
                   {b.activities.length > 0 && (
@@ -751,7 +834,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                     )}
                     {b.paymentStatus === "Verified" && (b.status === "Rejected" || b.status === "Rescheduled") && (
                       <button onClick={() => setRefundBooking(b)} className="flex items-center gap-2 bg-destructive/10 text-destructive border border-destructive/30 px-4 py-2 rounded-lg text-xs font-medium hover:bg-destructive/20">
-                        <Banknote size={13} /> Request Refund
+                        <BanknoteIcon size={13} /> Request Refund
                       </button>
                     )}
                   </div>

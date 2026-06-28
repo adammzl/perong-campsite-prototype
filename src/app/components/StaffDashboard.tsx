@@ -4,7 +4,7 @@ import {
   TrendingUp, AlertTriangle, Edit2, X, XCircle, MessageSquare,
   ChevronDown, ChevronUp, MapPin,
 } from "lucide-react";
-import type { Campsite, Booking, Payment, Activity, Equipment, RefundRequest } from "../App";
+import type { Campsite, Booking, Payment, Activity, Equipment, RefundRequest, Invoice } from "../App";
 import { saveData } from "../App";
 
 interface StaffDashboardProps {
@@ -22,9 +22,11 @@ interface StaffDashboardProps {
   setPayments: (p: Payment[]) => void;
   refunds: RefundRequest[];
   setRefunds: (r: RefundRequest[]) => void;
+  invoices: Invoice[];
+  setInvoices: (i: Invoice[]) => void;
 }
 
-type TabId = "overview" | "ongoing" | "approvals" | "sites" | "activities" | "equipment" | "report" | "refunds";
+type TabId = "overview" | "ongoing" | "approvals" | "sites" | "activities" | "equipment" | "report" | "refunds" | "invoices";
 type ActionType = "approve" | "reject" | "reschedule";
 
 // ─── Inline SVG icons (safe replacements for missing lucide icons) ─────────────
@@ -238,10 +240,19 @@ function PaymentDetailModal({ payment, booking, onClose, onVerify, onReject }: {
           </div>
         </div>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-          <p className="text-xs text-amber-700 font-medium mb-1 flex items-center gap-1"><EyeIcon size={11} /> Payment Proof from Customer</p>
-          <p className="text-sm text-foreground leading-relaxed">{payment.proofNote || "No proof provided."}</p>
-        </div>
+        {/* Proof image */}
+        {payment.proofImage ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+            <p className="text-xs text-amber-700 font-medium mb-2 flex items-center gap-1"><EyeIcon size={11} /> Payment Receipt (Uploaded by Customer)</p>
+            <img src={payment.proofImage} alt="Payment receipt" className="w-full max-h-64 object-contain rounded-lg border border-amber-200 bg-white" />
+            {payment.proofNote && <p className="text-sm text-foreground mt-2 pt-2 border-t border-amber-200 leading-relaxed">{payment.proofNote}</p>}
+          </div>
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <p className="text-xs text-amber-700 font-medium mb-1 flex items-center gap-1"><EyeIcon size={11} /> Payment Proof from Customer</p>
+            <p className="text-sm text-foreground leading-relaxed">{payment.proofNote || "No receipt or proof uploaded yet."}</p>
+          </div>
+        )}
 
         {booking && (
           <div className="bg-muted rounded-lg p-3 text-xs space-y-1 mb-5">
@@ -270,6 +281,165 @@ function PaymentDetailModal({ payment, booking, onClose, onVerify, onReject }: {
   );
 }
 
+
+// ─── Invoice Modal ────────────────────────────────────────────────────────────
+function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
+  const nights = Math.max(1, Math.round((new Date(invoice.checkOut).getTime() - new Date(invoice.checkIn).getTime()) / 86400000));
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        {/* Invoice Header */}
+        <div className="bg-foreground text-white px-8 py-6 rounded-t-2xl">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+                <span style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "1.2rem" }}>Perong Campsite</span>
+              </div>
+              <p className="text-white/60 text-xs">Perong Forest Reserve, Pahang, Malaysia</p>
+              <p className="text-white/60 text-xs">perong@campsite.my · +60 9-XXX XXXX</p>
+            </div>
+            <div className="text-right">
+              <p style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "1.4rem" }} className="text-white">INVOICE</p>
+              <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-white/80 text-sm">{invoice.id}</p>
+              <p className="text-white/60 text-xs mt-1">{fmtDate(invoice.invoiceDate)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-8 py-6">
+          {/* Bill To + Booking Info */}
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bill To</p>
+              <p className="text-foreground font-semibold">{invoice.guest}</p>
+              <p className="text-muted-foreground text-sm">{invoice.guestEmail}</p>
+              <p className="text-muted-foreground text-sm">{invoice.phone}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Booking Details</p>
+              <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground text-sm">{invoice.bookingId}</p>
+              <p className="text-muted-foreground text-sm">{invoice.site}</p>
+              <p className="text-muted-foreground text-sm">{fmtDate(invoice.checkIn)} – {fmtDate(invoice.checkOut)}</p>
+              <p className="text-muted-foreground text-sm">{invoice.guests} guest{invoice.guests > 1 ? "s" : ""} · {nights} night{nights > 1 ? "s" : ""}</p>
+              <p className="text-muted-foreground text-sm">Vehicle: {invoice.vehiclePlate}</p>
+            </div>
+          </div>
+
+          {/* Line Items */}
+          <div className="border border-border rounded-xl overflow-hidden mb-6">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-left px-4 py-3 text-xs text-muted-foreground font-medium">Description</th>
+                  <th className="text-right px-4 py-3 text-xs text-muted-foreground font-medium">Qty</th>
+                  <th className="text-right px-4 py-3 text-xs text-muted-foreground font-medium">Unit Price</th>
+                  <th className="text-right px-4 py-3 text-xs text-muted-foreground font-medium">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Campsite row */}
+                <tr className="border-t border-border">
+                  <td className="px-4 py-3 text-foreground">
+                    <p className="font-medium">{invoice.site}</p>
+                    <p className="text-xs text-muted-foreground">{fmtDate(invoice.checkIn)} – {fmtDate(invoice.checkOut)}</p>
+                  </td>
+                  <td className="px-4 py-3 text-right text-muted-foreground">{nights} night{nights > 1 ? "s" : ""}</td>
+                  <td className="px-4 py-3 text-right text-muted-foreground" style={{ fontFamily: "'DM Mono',monospace" }}>
+                    RM {nights > 0 ? (invoice.siteCost / nights).toFixed(2) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right text-foreground" style={{ fontFamily: "'DM Mono',monospace" }}>RM {invoice.siteCost.toFixed(2)}</td>
+                </tr>
+                {/* Activities */}
+                {invoice.activities.map((a, i) => (
+                  <tr key={i} className="border-t border-border bg-muted/20">
+                    <td className="px-4 py-3 text-foreground">
+                      <p className="font-medium">{a.name}</p>
+                      <p className="text-xs text-muted-foreground">Activity</p>
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">{a.pax} pax</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground" style={{ fontFamily: "'DM Mono',monospace" }}>RM {a.pricePerPax.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right text-foreground" style={{ fontFamily: "'DM Mono',monospace" }}>RM {(a.pax * a.pricePerPax).toFixed(2)}</td>
+                  </tr>
+                ))}
+                {/* Equipment */}
+                {invoice.equipment.map((e, i) => (
+                  <tr key={i} className="border-t border-border bg-muted/20">
+                    <td className="px-4 py-3 text-foreground">
+                      <p className="font-medium">{e.name}</p>
+                      <p className="text-xs text-muted-foreground">Equipment · {e.equipmentId}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">{e.nights} night{e.nights > 1 ? "s" : ""}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground" style={{ fontFamily: "'DM Mono',monospace" }}>RM {e.pricePerNight.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right text-foreground" style={{ fontFamily: "'DM Mono',monospace" }}>RM {(e.nights * e.pricePerNight).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals */}
+          <div className="flex justify-end mb-6">
+            <div className="w-64 space-y-2 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Campsite</span>
+                <span style={{ fontFamily: "'DM Mono',monospace" }}>RM {invoice.siteCost.toFixed(2)}</span>
+              </div>
+              {invoice.activitiesCost > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Activities</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace" }}>RM {invoice.activitiesCost.toFixed(2)}</span>
+                </div>
+              )}
+              {invoice.equipmentCost > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Equipment Rental</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace" }}>RM {invoice.equipmentCost.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-foreground font-bold border-t border-border pt-2 text-base">
+                <span>Total Amount</span>
+                <span style={{ fontFamily: "'DM Mono',monospace" }}>RM {invoice.totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Info */}
+          <div className="bg-muted rounded-xl p-4 mb-6 grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Payment Method</p>
+              <p className="text-foreground font-medium">{invoice.paymentMethod || "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Payment Status</p>
+              <p className={`font-medium ${invoice.paymentStatus === "Verified" ? "text-primary" : "text-accent"}`}>{invoice.paymentStatus}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Invoice ID</p>
+              <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground">{invoice.id}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Booking Ref</p>
+              <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground">{invoice.bookingId}</p>
+            </div>
+          </div>
+
+          {/* Footer note */}
+          <p className="text-center text-xs text-muted-foreground border-t border-border pt-4">
+            Thank you for choosing Perong Campsite. This invoice was generated on {fmtDate(invoice.invoiceDate)}.
+            <br />For enquiries, contact us at perong@campsite.my
+          </p>
+        </div>
+
+        {/* Close button */}
+        <div className="px-8 pb-6">
+          <button onClick={onClose} className="w-full border border-border text-foreground py-2.5 rounded-lg text-sm hover:bg-muted transition-colors">Close Invoice</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN STAFF DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -281,6 +451,7 @@ export function StaffDashboard({
   bookings, setBookings,
   payments, setPayments,
   refunds, setRefunds,
+  invoices, setInvoices,
 }: StaffDashboardProps) {
   const [tab, setTab] = useState<TabId>("overview");
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
@@ -291,6 +462,7 @@ export function StaffDashboard({
   const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [newAct, setNewAct] = useState({ name: "", description: "", pricePerPax: "", icon: "🏕️" });
   const [newEq, setNewEq] = useState({ name: "", category: "tent" as "tent" | "equipment", pricePerNight: "" });
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const today = todayStr();
 
   const pendingBookings = bookings.filter(b => b.status === "Pending").length;
@@ -309,7 +481,7 @@ export function StaffDashboard({
       status: newStatus as Booking["status"],
       staffFeedback: feedback || "",
       suggestedCheckIn: action === "reschedule" ? suggestCheckIn : "",
-      suggestCheckOut: action === "reschedule" ? suggestCheckOut : "",
+      suggestedCheckOut: action === "reschedule" ? suggestCheckOut : "",
     });
     setBookings(updated); saveData("pc_bookings", updated); setReviewBooking(null);
   };
@@ -335,6 +507,40 @@ export function StaffDashboard({
     setPayments(updatedPayments); saveData("pc_payments", updatedPayments);
     setBookings(updatedBookings); saveData("pc_bookings", updatedBookings);
     setReviewPayment(null);
+  };
+
+  const generateInvoice = (booking: Booking, payment: Payment): Invoice => {
+    const invId = `INV-${booking.id.replace("BK-", "")}`;
+    // Check if invoice already exists
+    const existing = invoices.find(inv => inv.bookingId === booking.id);
+    if (existing) { setViewingInvoice(existing); return existing; }
+    const newInvoice: Invoice = {
+      id: invId,
+      bookingId: booking.id,
+      paymentId: payment.id,
+      invoiceDate: todayStr(),
+      guest: booking.guest,
+      guestEmail: booking.guestEmail,
+      phone: booking.phone,
+      site: booking.site,
+      checkIn: booking.checkIn,
+      checkOut: booking.checkOut,
+      guests: booking.guests,
+      vehiclePlate: booking.vehiclePlate,
+      activities: booking.activities.map(a => ({ name: a.name, pax: a.pax, pricePerPax: a.pricePerPax })),
+      equipment: booking.equipment.map(e => ({ name: e.name, equipmentId: e.equipmentId, nights: e.nights, pricePerNight: e.pricePerNight })),
+      siteCost: booking.siteCost,
+      activitiesCost: booking.activitiesCost,
+      equipmentCost: booking.equipmentCost,
+      totalAmount: booking.total,
+      paymentMethod: payment.method,
+      paymentStatus: payment.status,
+    };
+    const updated = [...invoices.filter(inv => inv.bookingId !== booking.id), newInvoice];
+    setInvoices(updated);
+    saveData("pc_invoices", updated);
+    setViewingInvoice(newInvoice);
+    return newInvoice;
   };
 
   // ── Site actions ─────────────────────────────────────────────────────────────
@@ -422,6 +628,7 @@ export function StaffDashboard({
     { id: "activities", label: "Activities" },
     { id: "equipment",  label: "Equipment" },
     { id: "refunds",    label: "Refunds",    badge: pendingRefunds || undefined },
+    { id: "invoices",   label: "Invoices" },
     { id: "report",     label: "Reports" },
   ];
 
@@ -434,6 +641,9 @@ export function StaffDashboard({
       {reviewPayment && (
         <PaymentDetailModal payment={reviewPayment} booking={bookings.find(b => b.id === reviewPayment.bookingId)}
           onClose={() => setReviewPayment(null)} onVerify={() => verifyPayment(reviewPayment.id)} onReject={() => rejectPayment(reviewPayment.id)} />
+      )}
+      {viewingInvoice && (
+        <InvoiceModal invoice={viewingInvoice} onClose={() => setViewingInvoice(null)} />
       )}
 
       {/* Header */}
@@ -720,6 +930,13 @@ export function StaffDashboard({
                           <button onClick={() => verifyPayment(p.id)} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm hover:opacity-90"><CheckCircle size={15} /> Verify Payment</button>
                         </div>
                       )}
+                      {p.status === "Verified" && linked && (
+                        <div className="pt-3 border-t border-border">
+                          <button onClick={() => generateInvoice(linked, p)} className="flex items-center gap-2 border border-border text-foreground px-4 py-2 rounded-lg text-sm hover:bg-muted">
+                            <FileTextIcon size={15} /> {invoices.find(inv => inv.bookingId === p.bookingId) ? "View Invoice" : "Generate Invoice"}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -893,6 +1110,47 @@ export function StaffDashboard({
                           <button onClick={() => processRefund(r.id, true)} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm hover:opacity-90"><CheckCircle size={15} /> Process Refund</button>
                         </div>
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── INVOICES ── */}
+        {tab === "invoices" && (
+          <div>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "1.6rem" }} className="text-foreground mb-2">Invoices</h2>
+            <p className="text-muted-foreground text-sm mb-6">Generated invoices for verified bookings. Go to Approvals → Payment Verifications to generate new invoices.</p>
+            {invoices.length === 0 ? (
+              <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground text-sm">
+                <FileTextIcon size={32} className="mx-auto mb-2 opacity-30" />
+                No invoices generated yet. Verify a payment to generate the first invoice.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {invoices.map(inv => {
+                  const linkedBooking = bookings.find(b => b.id === inv.bookingId);
+                  return (
+                    <div key={inv.id} className="bg-card border border-border rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p style={{ fontFamily: "'Playfair Display',serif", fontWeight: 600 }} className="text-foreground">{inv.guest}</p>
+                          <span style={{ fontFamily: "'DM Mono',monospace" }} className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">{inv.id}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{inv.site} · {fmtDate(inv.checkIn)} – {fmtDate(inv.checkOut)}</p>
+                        <p className="text-xs text-muted-foreground">Issued: {fmtDate(inv.invoiceDate)} · Booking: {inv.bookingId}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground font-semibold">RM {inv.totalAmount.toFixed(2)}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${inv.paymentStatus === "Verified" ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent"}`}>{inv.paymentStatus}</span>
+                        </div>
+                        <button onClick={() => setViewingInvoice(inv)} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm hover:opacity-90">
+                          <EyeIcon size={14} /> View Invoice
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
