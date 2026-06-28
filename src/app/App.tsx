@@ -111,8 +111,32 @@ export interface Payment {
   amount: number;
   method: string;
   proofNote: string;
+  proofImage: string; // base64 data URL of uploaded receipt/screenshot
   date: string;
   status: "Pending" | "Verified" | "Rejected";
+}
+
+export interface Invoice {
+  id: string;           // e.g. "INV-2483"
+  bookingId: string;
+  paymentId: string;
+  invoiceDate: string;
+  guest: string;
+  guestEmail: string;
+  phone: string;
+  site: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  vehiclePlate: string;
+  activities: { name: string; pax: number; pricePerPax: number }[];
+  equipment: { name: string; equipmentId: string; nights: number; pricePerNight: number }[];
+  siteCost: number;
+  activitiesCost: number;
+  equipmentCost: number;
+  totalAmount: number;
+  paymentMethod: string;
+  paymentStatus: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -217,14 +241,15 @@ export const DEFAULT_BOOKINGS: Booking[] = [
 ];
 
 export const DEFAULT_PAYMENTS: Payment[] = [
-  { id: "PAY-8821", bookingId: "BK-2483", guest: "Nurul Ain Binti Aziz", amount: 286, method: "FPX", proofNote: "Transferred via Maybank2u, ref TXN-88210", date: "2026-07-01", status: "Pending" },
-  { id: "PAY-8820", bookingId: "BK-2482", guest: "Lim Wei Jian", amount: 265, method: "Card", proofNote: "Visa ending 4242", date: "2026-07-01", status: "Verified" },
-  { id: "PAY-8819", bookingId: "BK-2481", guest: "Amirah Hassan", amount: 140, method: "Touch 'n Go", proofNote: "TnG wallet transfer confirmed", date: "2026-06-20", status: "Verified" },
-  { id: "PAY-8817", bookingId: "BK-2479", guest: "Raj Subramaniam", amount: 286, method: "Card", proofNote: "Mastercard ending 9876", date: "2026-06-05", status: "Verified" },
-  { id: "PAY-8710", bookingId: "BK-2309", guest: "Sarah Chen", amount: 110, method: "FPX", proofNote: "CIMB Clicks transfer confirmed", date: "2026-05-15", status: "Verified" },
+  { id: "PAY-8821", bookingId: "BK-2483", guest: "Nurul Ain Binti Aziz", amount: 286, method: "FPX", proofNote: "Transferred via Maybank2u, ref TXN-88210", proofImage: "", date: "2026-07-01", status: "Pending" },
+  { id: "PAY-8820", bookingId: "BK-2482", guest: "Lim Wei Jian", amount: 265, method: "Card", proofNote: "Visa ending 4242", proofImage: "", date: "2026-07-01", status: "Verified" },
+  { id: "PAY-8819", bookingId: "BK-2481", guest: "Amirah Hassan", amount: 140, method: "Touch 'n Go", proofNote: "TnG wallet transfer confirmed", proofImage: "", date: "2026-06-20", status: "Verified" },
+  { id: "PAY-8817", bookingId: "BK-2479", guest: "Raj Subramaniam", amount: 286, method: "Card", proofNote: "Mastercard ending 9876", proofImage: "", date: "2026-06-05", status: "Verified" },
+  { id: "PAY-8710", bookingId: "BK-2309", guest: "Sarah Chen", amount: 110, method: "FPX", proofNote: "CIMB Clicks transfer confirmed", proofImage: "", date: "2026-05-15", status: "Verified" },
 ];
 
 export const DEFAULT_REFUNDS: RefundRequest[] = [];
+export const DEFAULT_INVOICES: Invoice[] = [];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PERSISTENCE HELPERS
@@ -270,6 +295,7 @@ export default function App() {
   const [bookings, setBookings] = useState<Booking[]>(() => loadData("pc_bookings", DEFAULT_BOOKINGS));
   const [payments, setPayments] = useState<Payment[]>(() => loadData("pc_payments", DEFAULT_PAYMENTS));
   const [refunds, setRefunds] = useState<RefundRequest[]>(() => loadData("pc_refunds", DEFAULT_REFUNDS));
+  const [invoices, setInvoices] = useState<Invoice[]>(() => loadData("pc_invoices", DEFAULT_INVOICES));
 
   // Persist all data on change
   useEffect(() => { saveData("pc_campsites", campsites); }, [campsites]);
@@ -278,6 +304,7 @@ export default function App() {
   useEffect(() => { saveData("pc_bookings", bookings); }, [bookings]);
   useEffect(() => { saveData("pc_payments", payments); }, [payments]);
   useEffect(() => { saveData("pc_refunds", refunds); }, [refunds]);
+  useEffect(() => { saveData("pc_invoices", invoices); }, [invoices]);
 
   // Persist session
   useEffect(() => {
@@ -308,6 +335,7 @@ export default function App() {
     bookings, setBookings,
     payments, setPayments,
     refunds, setRefunds,
+    invoices, setInvoices,
   };
 
   if (page === "landing") return <LandingPage onGetStarted={() => setPage("auth")} />;
