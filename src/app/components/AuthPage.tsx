@@ -5,7 +5,7 @@ type UserRole = "customer" | "staff";
 
 interface AuthPageProps {
   onBack: () => void;
-  onLogin: (role: UserRole, name: string) => void;
+  onLogin: (role: UserRole, name: string, email: string) => void;
 }
 
 export function AuthPage({ onBack, onLogin }: AuthPageProps) {
@@ -35,15 +35,13 @@ export function AuthPage({ onBack, onLogin }: AuthPageProps) {
     }
 
     const displayName = mode === "register" ? form.name : form.email.split("@")[0];
-    onLogin(role, displayName);
+    // Pass email so bookings can be linked to the customer account
+    onLogin(role, displayName, form.email);
   };
 
   return (
-    <div
-      style={{ fontFamily: "'Lato', sans-serif" }}
-      className="min-h-screen bg-background flex"
-    >
-      {/* Left panel - decorative */}
+    <div style={{ fontFamily: "'Lato', sans-serif" }} className="min-h-screen bg-background flex">
+      {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-end p-12">
         <img
           src="https://images.unsplash.com/photo-1576176539998-0237d1ac6a85?w=900&h=1200&fit=crop&auto=format"
@@ -65,7 +63,7 @@ export function AuthPage({ onBack, onLogin }: AuthPageProps) {
         </div>
       </div>
 
-      {/* Right panel - form */}
+      {/* Right panel */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 md:px-16 py-12">
         <button
           onClick={onBack}
@@ -75,7 +73,6 @@ export function AuthPage({ onBack, onLogin }: AuthPageProps) {
           <span className="text-sm">Back to Home</span>
         </button>
 
-        {/* Mobile logo */}
         <div className="flex items-center gap-2 mb-8 lg:hidden">
           <TreePine size={24} className="text-primary" />
           <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }} className="text-xl text-primary">
@@ -95,7 +92,7 @@ export function AuthPage({ onBack, onLogin }: AuthPageProps) {
             : "Join us to book your forest escape."}
         </p>
 
-        {/* Role Selector */}
+        {/* Role selector */}
         <div className="flex rounded-lg overflow-hidden border border-border mb-6">
           {(["customer", "staff"] as UserRole[]).map((r) => (
             <button
@@ -195,6 +192,15 @@ export function AuthPage({ onBack, onLogin }: AuthPageProps) {
             {mode === "login" ? "Register here" : "Sign in"}
           </button>
         </p>
+
+        {/* Demo credentials hint */}
+        <div className="mt-8 bg-muted rounded-lg p-4 text-xs text-muted-foreground space-y-1">
+          <p className="font-medium text-foreground mb-2">Demo accounts (any password works):</p>
+          <p>Customer: <span className="font-mono text-foreground">nurul@demo.com</span> — has pending booking + payment proof</p>
+          <p>Customer: <span className="font-mono text-foreground">amirah@demo.com</span> — has confirmed booking due today</p>
+          <p>Customer: <span className="font-mono text-foreground">raj@demo.com</span> — currently checked in</p>
+          <p>Staff: any email + code <span className="font-mono text-foreground">PERONG2026</span></p>
+        </div>
       </div>
     </div>
   );
