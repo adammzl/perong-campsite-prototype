@@ -566,6 +566,7 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><AlertCircleIcon size={11} /> Vehicle plate and count are mandatory for site access.</p>
+                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><AlertCircleIcon size={11} /> If more than 1 vehicle is present, please put a coma in between the number plates, ex:ABC123, DEF4556.</p>
                 <div className="bg-muted rounded-lg p-4 mt-5 flex items-center justify-between">
                   <div><p className="text-sm text-muted-foreground">{nights} night{nights>1?"s":""} · {form.guests} pax</p>
                     <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground">RM {siteCost}.00 site</p></div>
