@@ -26,8 +26,20 @@ interface StaffDashboardProps {
   setInvoices: (i: Invoice[]) => void;
 }
 
-type TabId = "home" | "overview" | "ongoing" | "approvals" | "sites" | "activities" | "equipment" | "report" | "refunds" | "invoices";
+type TabId = "home" | "overview" | "ongoing" | "approvals" | "bookings" | "customers" | "sites" | "activities" | "equipment" | "report" | "refunds" | "invoices";
 type ActionType = "approve" | "reject" | "reschedule";
+
+// ─── Customer profile derived from bookings ───────────────────────────────────
+interface CustomerProfile {
+  email: string;
+  name: string;
+  phone: string;
+  vehiclePlate: string;
+  bookingCount: number;
+  totalSpent: number;
+  lastBooking: string;
+  notes: string;
+}
 
 // ─── Inline SVG icons (safe replacements for missing lucide icons) ─────────────
 function CheckIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
@@ -288,6 +300,123 @@ function PaymentDetailModal({ payment, booking, onClose, onVerify, onReject }: {
 }
 
 
+
+// ─── Customer Profile Modal (proper component so hooks work correctly) ─────────
+function CustomerProfileModal({
+  cust,
+  custBookings,
+  savedNote,
+  onSaveNote,
+  onClose,
+  bookingStatusStyle,
+}: {
+  cust: CustomerProfile;
+  custBookings: Booking[];
+  savedNote: string;
+  onSaveNote: (note: string) => void;
+  onClose: () => void;
+  bookingStatusStyle: Record<string, string>;
+}) {
+  const [localNote, setLocalNote] = useState(savedNote);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    onSaveNote(localNote);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="text-primary font-bold text-lg">{cust.name.charAt(0).toUpperCase()}</span>
+            </div>
+            <div>
+              <h3 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg">{cust.name}</h3>
+              <p className="text-xs text-muted-foreground">{cust.email}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+        </div>
+
+        {/* Customer info */}
+        <div className="bg-muted rounded-xl p-4 mb-5 text-sm space-y-2">
+          {[
+            ["Full Name", cust.name],
+            ["Email", cust.email],
+            ["Phone", cust.phone || "—"],
+            ["Vehicle Plate", cust.vehiclePlate || "—"],
+            ["Total Bookings", String(cust.bookingCount)],
+            ["Total Verified Spend", `RM ${cust.totalSpent}`],
+            ["Last Check-In", cust.lastBooking ? new Date(cust.lastBooking).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" }) : "—"],
+          ].map(([label, value]) => (
+            <div key={label} className="flex justify-between items-center py-1 border-b border-border last:border-0">
+              <span className="text-muted-foreground">{label}</span>
+              <span className="text-foreground font-medium text-right">{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Staff notes */}
+        <div className="mb-5">
+          <label className="block text-sm text-foreground mb-1.5 font-medium flex items-center gap-1.5">
+            <MessageSquareIcon size={14} /> Internal Staff Notes
+            <span className="text-xs text-muted-foreground font-normal">(not visible to guest)</span>
+          </label>
+          <textarea
+            rows={4}
+            value={localNote}
+            onChange={e => { setLocalNote(e.target.value); setSaved(false); }}
+            placeholder="e.g. VIP guest, prefers quiet sites. Had an issue with tent EQ-T-003 on last visit..."
+            className="w-full px-3 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+          />
+          <button
+            onClick={handleSave}
+            className={`mt-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${saved ? "bg-primary/20 text-primary" : "bg-primary text-primary-foreground hover:opacity-90"}`}
+          >
+            {saved ? "✓ Saved!" : "Save Notes"}
+          </button>
+        </div>
+
+        {/* Booking history */}
+        <div>
+          <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
+            <Calendar size={14} /> Booking History
+            <span className="text-xs text-muted-foreground font-normal">({custBookings.length} booking{custBookings.length !== 1 ? "s" : ""})</span>
+          </p>
+          {custBookings.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-4">No bookings on record.</p>
+          ) : (
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {custBookings.sort((a, b) => b.id.localeCompare(a.id)).map(b => (
+                <div key={b.id} className="bg-muted rounded-lg px-3 py-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span style={{ fontFamily: "'DM Mono',monospace" }} className="text-xs text-muted-foreground">{b.id}</span>
+                    <div className="flex gap-1.5">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${bookingStatusStyle[b.status] ?? "bg-muted text-muted-foreground"}`}>{b.status}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-foreground">{b.site} · {b.dates}</p>
+                  <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-xs text-muted-foreground">RM {b.total}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="pt-4 border-t border-border mt-4">
+          <button onClick={onClose} className="w-full border border-border text-foreground py-2 rounded-lg text-sm hover:bg-muted transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Invoice Modal ────────────────────────────────────────────────────────────
 function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
   const nights = Math.max(1, Math.round((new Date(invoice.checkOut).getTime() - new Date(invoice.checkIn).getTime()) / 86400000));
@@ -469,6 +598,18 @@ export function StaffDashboard({
   const [newAct, setNewAct] = useState({ name: "", description: "", pricePerPax: "", icon: "🏕️" });
   const [newEq, setNewEq] = useState({ name: "", category: "tent" as "tent" | "equipment", pricePerNight: "" });
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  // Manage Bookings
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [addBookingOpen, setAddBookingOpen] = useState(false);
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
+  // Customers
+  const [customerNotes, setCustomerNotes] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem("pc_customer_notes") || "{}"); } catch { return {}; }
+  });
+  const [editingCustomer, setEditingCustomer] = useState<CustomerProfile | null>(null);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [viewingCustomer, setViewingCustomer] = useState<CustomerProfile | null>(null);
   const today = todayStr();
 
   const pendingBookings = bookings.filter(b => b.status === "Pending").length;
@@ -607,6 +748,58 @@ export function StaffDashboard({
     setEquipment(updatedEquipment); saveData("pc_equipment", updatedEquipment);
   };
 
+  // ── Booking management ───────────────────────────────────────────────────────
+  const updateBookingStatus = (id: string, status: Booking["status"]) => {
+    const u = bookings.map(b => b.id === id ? { ...b, status } : b);
+    setBookings(u); saveData("pc_bookings", u);
+    setEditingBooking(prev => prev?.id === id ? { ...prev, status } : prev);
+  };
+
+  const deleteBooking = (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this booking? This cannot be undone.")) return;
+    const booking = bookings.find(b => b.id === id);
+    const releasedIds = booking?.equipment.map(e => e.equipmentId) ?? [];
+    const updatedEquipment = equipment.map(eq => releasedIds.includes(eq.id) ? { ...eq, available: true, currentBookingId: "" } : eq);
+    const u = bookings.filter(b => b.id !== id);
+    setBookings(u); saveData("pc_bookings", u);
+    setEquipment(updatedEquipment); saveData("pc_equipment", updatedEquipment);
+    setEditingBooking(null);
+  };
+
+  // ── Customer notes ───────────────────────────────────────────────────────────
+  const saveCustomerNotes = (email: string, notes: string) => {
+    const updated = { ...customerNotes, [email]: notes };
+    setCustomerNotes(updated);
+    localStorage.setItem("pc_customer_notes", JSON.stringify(updated));
+  };
+
+  // ── Derived customer profiles from bookings ──────────────────────────────────
+  const customerProfiles: CustomerProfile[] = Object.values(
+    bookings.reduce((acc, b) => {
+      if (!acc[b.guestEmail]) {
+        acc[b.guestEmail] = {
+          email: b.guestEmail,
+          name: b.guest,
+          phone: b.phone,
+          vehiclePlate: b.vehiclePlate,
+          bookingCount: 0,
+          totalSpent: 0,
+          lastBooking: b.checkIn,
+          notes: customerNotes[b.guestEmail] ?? "",
+        };
+      }
+      acc[b.guestEmail].bookingCount += 1;
+      if (b.paymentStatus === "Verified") acc[b.guestEmail].totalSpent += b.total;
+      if (b.checkIn > acc[b.guestEmail].lastBooking) {
+        acc[b.guestEmail].lastBooking = b.checkIn;
+        acc[b.guestEmail].name = b.guest;
+        acc[b.guestEmail].phone = b.phone;
+        acc[b.guestEmail].vehiclePlate = b.vehiclePlate;
+      }
+      return acc;
+    }, {} as Record<string, CustomerProfile>)
+  );
+
   // ── Refund processing ────────────────────────────────────────────────────────
   const processRefund = (id: string, approve: boolean) => {
     const u = refunds.map(r => r.id === id ? { ...r, status: approve ? "Processed" as const : "Rejected" as const } : r);
@@ -631,6 +824,8 @@ export function StaffDashboard({
     { id: "overview",   label: "Overview" },
     { id: "ongoing",    label: "Ongoing",    badge: checkedInNow || undefined },
     { id: "approvals",  label: "Approvals",  badge: (pendingBookings + pendingPayments) || undefined },
+    { id: "bookings",   label: "Manage Bookings" },
+    { id: "customers",  label: "Customers" },
     { id: "sites",      label: "Sites" },
     { id: "activities", label: "Activities" },
     { id: "equipment",  label: "Equipment" },
@@ -703,7 +898,7 @@ export function StaffDashboard({
                 </p>
                 <button onClick={() => setTab("overview")}
                   className="mt-6 bg-white text-foreground font-semibold px-6 py-3 rounded-xl text-sm hover:bg-white/90 transition-colors flex items-center gap-2 w-fit">
-                  <ChevronDownIcon size={16} /> Go to Dashboard
+                  <ChevronDown size={16} /> Go to Dashboard
                 </button>
               </div>
             </div>
@@ -1111,6 +1306,291 @@ export function StaffDashboard({
                 })}
               </div>
             )}
+          </div>
+        )}
+
+
+        {/* ── MANAGE BOOKINGS ── */}
+        {tab === "bookings" && (
+          <div>
+            {/* Edit Booking Modal */}
+            {editingBooking && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEditingBooking(null)}>
+                <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-start justify-between mb-5">
+                    <div>
+                      <h3 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg">Edit Booking</h3>
+                      <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-xs text-muted-foreground mt-0.5">{editingBooking.id}</p>
+                    </div>
+                    <button onClick={() => setEditingBooking(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+                  </div>
+
+                  {/* Read-only booking info */}
+                  <div className="bg-muted rounded-lg p-4 mb-5 text-sm space-y-1.5">
+                    {[
+                      ["Guest", editingBooking.guest],
+                      ["Email", editingBooking.guestEmail],
+                      ["Phone", editingBooking.phone],
+                      ["Campsite", editingBooking.site],
+                      ["Dates", editingBooking.dates],
+                      ["Guests", `${editingBooking.guests} pax`],
+                      ["Vehicle", `${editingBooking.vehiclePlate} · ${editingBooking.vehicleCount} vehicle${editingBooking.vehicleCount > 1 ? "s" : ""}`],
+                    ].map(([l, v]) => (
+                      <div key={l} className="flex justify-between">
+                        <span className="text-muted-foreground">{l}</span>
+                        <span className="text-foreground text-right">{v}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between border-t border-border pt-1.5 mt-1.5">
+                      <span className="text-muted-foreground font-medium">Total</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground font-semibold">RM {editingBooking.total}</span>
+                    </div>
+                  </div>
+
+                  {/* Editable: booking status */}
+                  <div className="mb-4">
+                    <label className="block text-sm text-foreground mb-2 font-medium">Booking Status</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["Pending","Confirmed","CheckedIn","CheckedOut","Completed","Rejected","Rescheduled"] as Booking["status"][]).map(s => (
+                        <button key={s} onClick={() => updateBookingStatus(editingBooking.id, s)}
+                          className={`py-2 px-3 rounded-lg text-xs font-medium border-2 transition-colors ${editingBooking.status === s ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Editable: payment status */}
+                  <div className="mb-5">
+                    <label className="block text-sm text-foreground mb-2 font-medium">Payment Status</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["Unpaid","ProofSubmitted","Verified","Rejected"] as Booking["paymentStatus"][]).map(s => (
+                        <button key={s} onClick={() => {
+                          const u = bookings.map(b => b.id === editingBooking.id ? { ...b, paymentStatus: s } : b);
+                          setBookings(u); saveData("pc_bookings", u);
+                          setEditingBooking(prev => prev ? { ...prev, paymentStatus: s } : prev);
+                        }}
+                          className={`py-2 px-3 rounded-lg text-xs font-medium border-2 transition-colors ${editingBooking.paymentStatus === s ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Staff feedback */}
+                  <div className="mb-5">
+                    <label className="block text-sm text-foreground mb-1 font-medium">Staff Note / Feedback</label>
+                    <textarea rows={3} value={editingBooking.staffFeedback}
+                      onChange={e => {
+                        const v = e.target.value;
+                        const u = bookings.map(b => b.id === editingBooking.id ? { ...b, staffFeedback: v } : b);
+                        setBookings(u); saveData("pc_bookings", u);
+                        setEditingBooking(prev => prev ? { ...prev, staffFeedback: v } : prev);
+                      }}
+                      placeholder="Leave a note visible to the customer..."
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                  </div>
+
+                  {editingBooking.activities.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-foreground mb-2">Activities</p>
+                      {editingBooking.activities.map(a => <p key={a.activityId} className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg mb-1">{a.name} × {a.pax} pax — RM {a.pax * a.pricePerPax}</p>)}
+                    </div>
+                  )}
+                  {editingBooking.equipment.length > 0 && (
+                    <div className="mb-5">
+                      <p className="text-sm font-medium text-foreground mb-2">Equipment Rented</p>
+                      {editingBooking.equipment.map(e => <p key={e.equipmentId} className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg mb-1">{e.name} ({e.equipmentId}) × {e.nights} nights — RM {e.nights * e.pricePerNight}</p>)}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-4 border-t border-border">
+                    <button onClick={() => deleteBooking(editingBooking.id)}
+                      className="flex items-center gap-2 border border-destructive text-destructive px-4 py-2 rounded-lg text-sm hover:bg-destructive/10">
+                      <XCircle size={14} /> Delete Booking
+                    </button>
+                    <button onClick={() => setEditingBooking(null)}
+                      className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg text-sm hover:opacity-90">
+                      Done
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "1.6rem" }} className="text-foreground mb-1">Manage Bookings</h2>
+                <p className="text-muted-foreground text-sm">View, edit status, update feedback, or delete any booking.</p>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3 mb-6">
+              <input type="text" placeholder="Search by guest name, ID, or campsite..." value={bookingSearch} onChange={e => setBookingSearch(e.target.value)}
+                className="flex-1 min-w-48 px-4 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <select value={bookingStatusFilter} onChange={e => setBookingStatusFilter(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="all">All Statuses</option>
+                {["Pending","Confirmed","CheckedIn","CheckedOut","Completed","Rejected","Rescheduled"].map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {[
+                { label: "Total", value: bookings.length, color: "text-foreground" },
+                { label: "Pending", value: bookings.filter(b => b.status === "Pending").length, color: "text-accent" },
+                { label: "Confirmed", value: bookings.filter(b => b.status === "Confirmed").length, color: "text-primary" },
+                { label: "Completed", value: bookings.filter(b => b.status === "Completed").length, color: "text-muted-foreground" },
+              ].map(s => (
+                <div key={s.label} className="bg-card border border-border rounded-xl p-4 text-center">
+                  <p style={{ fontFamily: "'DM Mono',monospace" }} className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Bookings table */}
+            <div className="space-y-3">
+              {bookings
+                .filter(b => {
+                  const q = bookingSearch.toLowerCase();
+                  const matchSearch = !q || b.guest.toLowerCase().includes(q) || b.id.toLowerCase().includes(q) || b.site.toLowerCase().includes(q) || b.guestEmail.toLowerCase().includes(q);
+                  const matchStatus = bookingStatusFilter === "all" || b.status === bookingStatusFilter;
+                  return matchSearch && matchStatus;
+                })
+                .sort((a, b) => b.id.localeCompare(a.id))
+                .map(b => (
+                  <div key={b.id} className="bg-card border border-border rounded-xl p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                      <div>
+                        <p style={{ fontFamily: "'Playfair Display',serif", fontWeight: 600 }} className="text-foreground">{b.guest}</p>
+                        <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-xs text-muted-foreground">{b.id} · {b.guestEmail}</p>
+                      </div>
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <span className={`text-xs px-3 py-1 rounded-full ${bookingStatusStyle[b.status] ?? "bg-muted text-muted-foreground"}`}>{b.status}</span>
+                        <span className={`text-xs px-3 py-1 rounded-full ${payStatusStyle[b.paymentStatus] ?? "bg-muted text-muted-foreground"}`}>{b.paymentStatus}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-muted-foreground mb-3">
+                      <span className="flex items-center gap-1"><MapPin size={11} />{b.site}</span>
+                      <span className="flex items-center gap-1"><Calendar size={11} />{b.dates}</span>
+                      <span className="flex items-center gap-1"><Users size={11} />{b.guests} pax</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace" }}>RM {b.total}</span>
+                    </div>
+                    {b.staffFeedback && (
+                      <p className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg mb-3 italic">&ldquo;{b.staffFeedback}&rdquo;</p>
+                    )}
+                    <div className="flex justify-end pt-3 border-t border-border">
+                      <button onClick={() => setEditingBooking(b)}
+                        className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-sm hover:bg-primary hover:text-primary-foreground transition-colors">
+                        <Edit2 size={13} /> View & Edit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              {bookings.filter(b => {
+                const q = bookingSearch.toLowerCase();
+                return (!q || b.guest.toLowerCase().includes(q) || b.id.toLowerCase().includes(q) || b.site.toLowerCase().includes(q)) &&
+                  (bookingStatusFilter === "all" || b.status === bookingStatusFilter);
+              }).length === 0 && (
+                <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground text-sm">
+                  <CheckCircle size={28} className="mx-auto mb-2 text-muted-foreground opacity-30" /> No bookings match your search.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── CUSTOMERS ── */}
+        {tab === "customers" && (
+          <div>
+            {/* Customer profile modal — proper component, no hooks-in-callback */}
+            {viewingCustomer && (
+              <CustomerProfileModal
+                cust={viewingCustomer}
+                custBookings={bookings.filter(b => b.guestEmail === viewingCustomer.email)}
+                savedNote={customerNotes[viewingCustomer.email] ?? ""}
+                onSaveNote={(note) => saveCustomerNotes(viewingCustomer.email, note)}
+                onClose={() => setViewingCustomer(null)}
+                bookingStatusStyle={bookingStatusStyle}
+              />
+            )}
+
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "1.6rem" }} className="text-foreground mb-2">Customer Management</h2>
+            <p className="text-muted-foreground text-sm mb-6">View all customers derived from booking records. Click any customer to see their full profile and history.</p>
+
+            {/* Search */}
+            <div className="mb-6">
+              <input type="text" placeholder="Search by name, email, or vehicle plate..." value={customerSearch} onChange={e => setCustomerSearch(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-card border border-border rounded-xl p-4 text-center">
+                <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-2xl text-foreground">{customerProfiles.length}</p>
+                <p className="text-xs text-muted-foreground">Total Customers</p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4 text-center">
+                <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-2xl text-primary">{customerProfiles.filter(c => c.bookingCount > 1).length}</p>
+                <p className="text-xs text-muted-foreground">Repeat Guests</p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4 text-center">
+                <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-2xl text-foreground">RM {customerProfiles.reduce((s, c) => s + c.totalSpent, 0)}</p>
+                <p className="text-xs text-muted-foreground">Total Revenue</p>
+              </div>
+            </div>
+
+            {/* Customer list */}
+            <div className="space-y-3">
+              {customerProfiles
+                .filter(c => {
+                  const q = customerSearch.toLowerCase();
+                  return !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.vehiclePlate.toLowerCase().includes(q);
+                })
+                .sort((a, b) => b.bookingCount - a.bookingCount)
+                .map(cust => (
+                  <div key={cust.email} className="bg-card border border-border rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <span className="text-primary font-bold text-sm">{cust.name.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <p style={{ fontFamily: "'Playfair Display',serif", fontWeight: 600 }} className="text-foreground">{cust.name}</p>
+                        <p className="text-xs text-muted-foreground">{cust.email}</p>
+                        <p className="text-xs text-muted-foreground">{cust.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="text-center">
+                        <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground font-semibold">{cust.bookingCount}</p>
+                        <p className="text-xs text-muted-foreground">Booking{cust.bookingCount !== 1 ? "s" : ""}</p>
+                      </div>
+                      <div className="text-center">
+                        <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground font-semibold">RM {cust.totalSpent}</p>
+                        <p className="text-xs text-muted-foreground">Spent</p>
+                      </div>
+                      {customerNotes[cust.email] && (
+                        <div className="w-2 h-2 rounded-full bg-accent shrink-0" title="Has staff notes" />
+                      )}
+                      <button onClick={() => setViewingCustomer(cust)}
+                        className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-sm hover:bg-primary hover:text-primary-foreground transition-colors">
+                        <EyeIcon size={13} /> View Profile
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              {customerProfiles.filter(c => {
+                const q = customerSearch.toLowerCase();
+                return !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
+              }).length === 0 && (
+                <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground text-sm">
+                  <Users size={28} className="mx-auto mb-2 opacity-30" /> No customers found.
+                </div>
+              )}
+            </div>
           </div>
         )}
 
