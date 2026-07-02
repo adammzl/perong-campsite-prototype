@@ -576,10 +576,10 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                   </h2>
                   <div className="space-y-4">
                     {[
-                      { q: "How do I know if my booking is confirmed?", a: "Your booking status in "My Bookings" will change from Pending to Confirmed once a staff member approves it. You will also see a green notification banner." },
-                      { q: "What payment methods are accepted?", a: "We accept FPX Online Banking (Maybank2u, CIMB Clicks, RHB, Public Bank), credit/debit cards (Visa, Mastercard), and e-Wallets (Touch 'n Go, GrabPay, Boost)." },
-                      { q: "Can I add activities after I've confirmed my booking?", a: "No — activities and equipment rentals must be selected during the booking process. Contact staff directly if you need to make changes after confirmation." },
-                      { q: "What happens if my booking is rejected?", a: "You will receive a notification with the staff's reason. If you have already paid, you can request a full refund directly from the My Bookings page." },
+                      { q: "How do I know if my booking is confirmed?", a: "Your booking status in 'My Bookings' will change from Pending to Confirmed once a staff member approves it. You will also see a green notification banner." },
+                      { q: "What payment methods are accepted?", a: "We accept FPX Online Banking (Maybank2u, CIMB Clicks, RHB, Public Bank), credit/debit cards (Visa, Mastercard), and e-Wallets (Touch &apos;n Go, GrabPay, Boost)." },
+                      { q: "Can I add activities after confirming my booking?", a: "No — activities and equipment rentals must be selected during the booking process. Contact staff directly if you need to make changes after confirmation." },
+                      { q: "What happens if my booking is rejected?", a: "You will receive a notification with the staff reason. If you have already paid, you can request a full refund directly from the My Bookings page." },
                       { q: "Is there mobile network coverage at the campsite?", a: "Coverage varies by location within the site. Riverside Clearing A and Stream Edge F have the best reception. Canopy Suite E and Firefly Valley C may have limited signal." },
                       { q: "What should I bring that is NOT provided?", a: "Personal toiletries, insect repellent, torch/headlamp (unless renting a lantern), food and cooking ingredients, and appropriate clothing for the forest environment." },
                     ].map((item, i) => (
