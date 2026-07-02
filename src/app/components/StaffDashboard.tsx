@@ -26,7 +26,7 @@ interface StaffDashboardProps {
   setInvoices: (i: Invoice[]) => void;
 }
 
-type TabId = "overview" | "ongoing" | "approvals" | "sites" | "activities" | "equipment" | "report" | "refunds" | "invoices";
+type TabId = "home" | "overview" | "ongoing" | "approvals" | "sites" | "activities" | "equipment" | "report" | "refunds" | "invoices";
 type ActionType = "approve" | "reject" | "reschedule";
 
 // ─── Inline SVG icons (safe replacements for missing lucide icons) ─────────────
@@ -459,7 +459,7 @@ export function StaffDashboard({
   refunds, setRefunds,
   invoices, setInvoices,
 }: StaffDashboardProps) {
-  const [tab, setTab] = useState<TabId>("overview");
+  const [tab, setTab] = useState<TabId>("home");
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
   const [reviewPayment, setReviewPayment] = useState<Payment | null>(null);
   const [editingPrice, setEditingPrice] = useState<number | null>(null);
@@ -627,6 +627,7 @@ export function StaffDashboard({
   }, [bookings, payments, reportMonth]);
 
   const tabs: { id: TabId; label: string; badge?: number }[] = [
+    { id: "home",       label: "Home" },
     { id: "overview",   label: "Overview" },
     { id: "ongoing",    label: "Ongoing",    badge: checkedInNow || undefined },
     { id: "approvals",  label: "Approvals",  badge: (pendingBookings + pendingPayments) || undefined },
@@ -681,6 +682,168 @@ export function StaffDashboard({
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
+
+        {/* ── HOME ── */}
+        {tab === "home" && (
+          <div className="max-w-4xl mx-auto">
+
+            {/* Welcome banner */}
+            <div className="relative overflow-hidden rounded-2xl mb-8" style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)" }}>
+              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 30% 40%, white 1px, transparent 1px), radial-gradient(circle at 70% 70%, white 1px, transparent 1px)", backgroundSize: "50px 50px" }} />
+              <div className="relative px-8 py-10">
+                <div className="flex items-center gap-3 mb-4">
+                  <TreePine size={28} className="text-secondary" />
+                  <span style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "1.3rem" }} className="text-white">Perong Campsite — Staff Portal</span>
+                </div>
+                <h1 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "2rem" }} className="text-white mb-2">
+                  Welcome, {userName} 👋
+                </h1>
+                <p className="text-white/70 text-base max-w-xl leading-relaxed">
+                  This is your management hub. Everything you need to run day-to-day campsite operations is accessible from the tabs above. Read the guide below before getting started.
+                </p>
+                <button onClick={() => setTab("overview")}
+                  className="mt-6 bg-white text-foreground font-semibold px-6 py-3 rounded-xl text-sm hover:bg-white/90 transition-colors flex items-center gap-2 w-fit">
+                  <ChevronDownIcon size={16} /> Go to Dashboard
+                </button>
+              </div>
+            </div>
+
+            {/* Quick nav cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+              {[
+                { label: "Overview", sub: "Stats & pending actions", tab: "overview" as TabId, icon: "📊" },
+                { label: "Ongoing", sub: "Active check-ins", tab: "ongoing" as TabId, icon: "🟢" },
+                { label: "Approvals", sub: "Bookings & payments", tab: "approvals" as TabId, icon: "✅" },
+                { label: "Reports", sub: "Monthly summary", tab: "report" as TabId, icon: "📋" },
+              ].map(q => (
+                <button key={q.tab} onClick={() => setTab(q.tab)}
+                  className="bg-card border border-border rounded-xl p-4 text-left hover:shadow-md hover:border-primary/30 transition-all group">
+                  <div className="text-2xl mb-2">{q.icon}</div>
+                  <p className="text-foreground text-sm font-semibold group-hover:text-primary transition-colors">{q.label}</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">{q.sub}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+
+              {/* Daily operations guide */}
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg mb-4 flex items-center gap-2">
+                  📋 Daily Operations Guide
+                </h2>
+                <div className="space-y-3">
+                  {[
+                    { step: "1", title: "Check the Overview dashboard first", desc: "Start every shift by reviewing the Overview tab. It shows all pending bookings, unverified payments, and any guests due to check out today.", icon: "📊" },
+                    { step: "2", title: "Verify pending payments", desc: "Go to Approvals → Payment Verifications. Open each payment, view the customer's uploaded receipt image carefully, and verify or reject.", icon: "💳" },
+                    { step: "3", title: "Review and respond to bookings", desc: "Go to Approvals → Booking Requests. Approve, reschedule (with a reason and new dates), or reject (with a reason). Customers are notified immediately.", icon: "📅" },
+                    { step: "4", title: "Manage ongoing stays", desc: "Use the Ongoing tab to check guests in and out. When a guest departs, click Check Out, then Mark Complete — this automatically releases their rented equipment.", icon: "🏕️" },
+                    { step: "5", title: "Process refund requests", desc: "Check the Refunds tab for any pending requests from guests whose bookings were rejected or rescheduled.", icon: "💸" },
+                    { step: "6", title: "Generate invoices after payment", desc: "Once a payment is verified, use the Generate Invoice button in Payment Verifications. All invoices can be viewed in the Invoices tab.", icon: "🧾" },
+                    { step: "7", title: "Pull monthly reports at end of month", desc: "Use the Reports tab to generate a full summary of bookings, revenue, activity participation, and equipment usage for any selected month.", icon: "📈" },
+                  ].map((item) => (
+                    <div key={item.step} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">{item.step}</div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+
+                {/* Management rules */}
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg mb-4 flex items-center gap-2">
+                    🏕️ Site Management Rules
+                  </h2>
+                  <div className="space-y-3">
+                    {[
+                      { rule: "Only mark a campsite as Unavailable if it is undergoing maintenance, repair, or is otherwise physically unfit for guests.", icon: "🚫" },
+                      { rule: "Price changes take effect immediately for all future bookings. Existing confirmed bookings retain their original price.", icon: "💰" },
+                      { rule: "Do not approve a booking if the payment has not been verified first, unless special arrangements have been made.", icon: "⚠️" },
+                      { rule: "When rescheduling, always provide a suggested alternative date range. Rescheduling without dates leaves the guest in limbo.", icon: "📅" },
+                      { rule: "Equipment marked 'Needs Repair' should be toggled to Unavailable until it has been serviced.", icon: "🔧" },
+                      { rule: "New activities or equipment must be added before a booking is made — they cannot be retroactively added to confirmed bookings.", icon: "➕" },
+                      { rule: "Completing a booking (after check-out) automatically releases all rented equipment back to available inventory. Always complete bookings promptly.", icon: "✅" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                        <p className="text-sm text-foreground leading-relaxed">{item.rule}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Booking status reference */}
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg mb-4 flex items-center gap-2">
+                    🔖 Booking Status Reference
+                  </h2>
+                  <div className="space-y-2">
+                    {[
+                      { status: "Pending", color: "bg-accent/10 text-accent", desc: "Submitted by customer, awaiting staff review" },
+                      { status: "Confirmed", color: "bg-primary/10 text-primary", desc: "Approved by staff, payment verified" },
+                      { status: "CheckedIn", color: "bg-emerald-100 text-emerald-700", desc: "Guest is currently on site" },
+                      { status: "CheckedOut", color: "bg-blue-100 text-blue-700", desc: "Guest has departed, awaiting completion" },
+                      { status: "Completed", color: "bg-muted text-muted-foreground", desc: "Stay finished, equipment released" },
+                      { status: "Rescheduled", color: "bg-purple-100 text-purple-700", desc: "Staff suggested new dates, awaiting customer response" },
+                      { status: "Rejected", color: "bg-destructive/10 text-destructive", desc: "Booking declined, customer notified with reason" },
+                    ].map(item => (
+                      <div key={item.status} className="flex items-center gap-3 py-1.5 border-b border-border last:border-0">
+                        <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${item.color}`}>{item.status}</span>
+                        <span className="text-xs text-muted-foreground">{item.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Payment status reference */}
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg mb-4 flex items-center gap-2">
+                    💳 Payment Status Reference
+                  </h2>
+                  <div className="space-y-2">
+                    {[
+                      { status: "Unpaid", color: "bg-destructive/10 text-destructive", desc: "Customer has not submitted payment yet" },
+                      { status: "ProofSubmitted", color: "bg-accent/10 text-accent", desc: "Receipt uploaded, pending staff verification" },
+                      { status: "Verified", color: "bg-primary/10 text-primary", desc: "Payment confirmed — invoice can be generated" },
+                      { status: "Rejected", color: "bg-destructive/10 text-destructive", desc: "Receipt rejected — customer must resubmit" },
+                    ].map(item => (
+                      <div key={item.status} className="flex items-center gap-3 py-1.5 border-b border-border last:border-0">
+                        <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${item.color}`}>{item.status}</span>
+                        <span className="text-xs text-muted-foreground">{item.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Internal contacts */}
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                  <h3 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground mb-3 flex items-center gap-2">
+                    📞 Internal Contacts
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    {[
+                      ["Site Supervisor", "+60 9-XXX XXXX"],
+                      ["Maintenance Team", "+60 9-XXX XXXX"],
+                      ["Emergency (Police/Fire/Ambulance)", "999"],
+                      ["Nearest Hospital (Hospital Temerloh)", "+60 9-296 1211"],
+                    ].map(([label, num]) => (
+                      <div key={label} className="flex justify-between">
+                        <span className="text-muted-foreground">{label}</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground font-medium">{num}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── OVERVIEW ── */}
         {tab === "overview" && (

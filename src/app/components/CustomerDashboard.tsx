@@ -78,7 +78,7 @@ interface CustomerDashboardProps {
   setInvoices: (i: Invoice[]) => void;
 }
 
-type TabId = "browse" | "booking" | "payment" | "mybookings";
+type TabId = "home" | "browse" | "booking" | "payment" | "mybookings";
 type BookingStep = "site" | "extras" | "review" | "done";
 type PayStep = "method" | "proof" | "done";
 
@@ -291,7 +291,7 @@ function NotificationBanner({ bookings, onAcceptReschedule, onDeclineReschedule,
 // MAIN CUSTOMER DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
 export function CustomerDashboard({ userName, userEmail, onLogout, campsites, activities, equipment, setEquipment, bookings, setBookings, payments, setPayments, refunds, setRefunds, invoices, setInvoices }: CustomerDashboardProps) {
-  const [tab, setTab] = useState<TabId>("browse");
+  const [tab, setTab] = useState<TabId>("home");
   const [popupSite, setPopupSite] = useState<Campsite | null>(null);
   const [refundBooking, setRefundBooking] = useState<Booking | null>(null);
 
@@ -476,6 +476,144 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
 
       <div className="max-w-6xl mx-auto px-6 py-8">
 
+        {/* ── HOME ── */}
+        {tab === "home" && (
+          <div className="max-w-4xl mx-auto">
+            {/* Welcome banner */}
+            <div className="relative overflow-hidden rounded-2xl mb-8" style={{ background: "linear-gradient(135deg, var(--color-primary) 0%, #2d5a3d 100%)" }}>
+              <div className="absolute inset-0 opacity-10">
+                <div style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "60px 60px" }} className="w-full h-full" />
+              </div>
+              <div className="relative px-8 py-10">
+                <div className="flex items-center gap-3 mb-4">
+                  <TreePine size={32} className="text-secondary" />
+                  <span style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "1.6rem" }} className="text-white">Perong Campsite</span>
+                </div>
+                <h1 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "2rem" }} className="text-white mb-2">
+                  Welcome back, {userName} 👋
+                </h1>
+                <p className="text-white/70 text-base max-w-xl leading-relaxed">
+                  We're glad to have you here. Before you dive in, please take a moment to read through the guidelines and FAQs below — they'll make your stay smooth and enjoyable for everyone.
+                </p>
+                <button onClick={() => setTab("browse")}
+                  className="mt-6 bg-white text-primary font-semibold px-6 py-3 rounded-xl text-sm hover:bg-white/90 transition-colors flex items-center gap-2 w-fit">
+                  <ChevronRight size={16} /> Browse Available Campsites
+                </button>
+              </div>
+            </div>
+
+            {/* Quick actions row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+              {[
+                { label: "Browse Sites", sub: "View available campsites", tab: "browse" as TabId, icon: <TentIcon size={20} className="text-primary" /> },
+                { label: "Make a Booking", sub: "Book your stay", tab: "booking" as TabId, icon: <CalendarCheckIcon size={20} className="text-primary" /> },
+                { label: "Payment", sub: "Submit proof of payment", tab: "payment" as TabId, icon: <CreditCard size={20} className="text-primary" /> },
+                { label: "My Bookings", sub: "Track your bookings", tab: "mybookings" as TabId, icon: <Users size={20} className="text-primary" /> },
+              ].map(q => (
+                <button key={q.tab} onClick={() => setTab(q.tab)}
+                  className="bg-card border border-border rounded-xl p-4 text-left hover:shadow-md hover:border-primary/30 transition-all group">
+                  <div className="mb-2">{q.icon}</div>
+                  <p className="text-foreground text-sm font-semibold group-hover:text-primary transition-colors">{q.label}</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">{q.sub}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+
+              {/* Booking Rules */}
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg mb-4 flex items-center gap-2">
+                  <InfoIcon size={18} className="text-primary" /> Booking Guidelines
+                </h2>
+                <div className="space-y-3">
+                  {[
+                    { rule: "Minimum stay is 1 night. Check-in is from 2:00 PM, check-out by 12:00 PM noon.", icon: "🕑" },
+                    { rule: "All bookings are subject to staff approval. You will be notified once your booking is confirmed.", icon: "✅" },
+                    { rule: "Payment proof must be submitted within 24 hours of making a booking or your slot may be released.", icon: "💳" },
+                    { rule: "Vehicle plate number and number of vehicles are mandatory. Unregistered vehicles will not be permitted entry.", icon: "🚗" },
+                    { rule: "Bookings can be rescheduled or cancelled by staff under certain circumstances (e.g. site maintenance). A full refund will be issued.", icon: "📅" },
+                    { rule: "Children under 12 must be accompanied by a responsible adult at all times.", icon: "👨‍👩‍👧" },
+                    { rule: "Maximum guest count is determined by the campsite capacity. Do not exceed the stated limit.", icon: "👥" },
+                    { rule: "Activities and equipment rentals must be selected at time of booking and cannot be added after confirmation.", icon: "🏕️" },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                      <p className="text-sm text-foreground leading-relaxed">{item.rule}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Camping Etiquette + FAQs */}
+              <div className="space-y-6">
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg mb-4 flex items-center gap-2">
+                    <TentIcon size={18} className="text-primary" /> Camping Etiquette
+                  </h2>
+                  <div className="space-y-3">
+                    {[
+                      { rule: "Quiet hours are strictly observed from 11:00 PM to 6:00 AM. Please keep noise to a minimum.", icon: "🌙" },
+                      { rule: "All rubbish must be disposed of in the designated bins. Leave your site cleaner than you found it.", icon: "🗑️" },
+                      { rule: "Open fires are only permitted in designated firepits. Never leave a fire unattended.", icon: "🔥" },
+                      { rule: "Do not disturb wildlife or remove any plants, stones, or natural materials from the site.", icon: "🌿" },
+                      { rule: "Respect other guests' privacy and personal space. Keep noise and light pollution to your own campsite area.", icon: "🤝" },
+                      { rule: "Pets are allowed but must be kept on a leash at all times and are not permitted in rental equipment.", icon: "🐾" },
+                      { rule: "Alcohol is permitted in moderation. Disruptive behaviour will result in immediate removal from the site.", icon: "🍺" },
+                      { rule: "Any rented equipment that is damaged or lost will be charged to the booking guest at replacement cost.", icon: "🏕️" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                        <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                        <p className="text-sm text-foreground leading-relaxed">{item.rule}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <h2 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground text-lg mb-4 flex items-center gap-2">
+                    <MessageSquareIcon size={18} className="text-primary" /> Frequently Asked Questions
+                  </h2>
+                  <div className="space-y-4">
+                    {[
+                      { q: "How do I know if my booking is confirmed?", a: "Your booking status in "My Bookings" will change from Pending to Confirmed once a staff member approves it. You will also see a green notification banner." },
+                      { q: "What payment methods are accepted?", a: "We accept FPX Online Banking (Maybank2u, CIMB Clicks, RHB, Public Bank), credit/debit cards (Visa, Mastercard), and e-Wallets (Touch 'n Go, GrabPay, Boost)." },
+                      { q: "Can I add activities after I've confirmed my booking?", a: "No — activities and equipment rentals must be selected during the booking process. Contact staff directly if you need to make changes after confirmation." },
+                      { q: "What happens if my booking is rejected?", a: "You will receive a notification with the staff's reason. If you have already paid, you can request a full refund directly from the My Bookings page." },
+                      { q: "Is there mobile network coverage at the campsite?", a: "Coverage varies by location within the site. Riverside Clearing A and Stream Edge F have the best reception. Canopy Suite E and Firefly Valley C may have limited signal." },
+                      { q: "What should I bring that is NOT provided?", a: "Personal toiletries, insect repellent, torch/headlamp (unless renting a lantern), food and cooking ingredients, and appropriate clothing for the forest environment." },
+                    ].map((item, i) => (
+                      <div key={i} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                        <p className="text-sm font-semibold text-foreground mb-1">{item.q}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Emergency contact */}
+                <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-5">
+                  <h3 style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700 }} className="text-foreground mb-3 flex items-center gap-2">
+                    <AlertCircleIcon size={16} className="text-destructive" /> Emergency Contacts
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    {[
+                      ["Campsite Management", "+60 9-XXX XXXX"],
+                      ["Emergency (Police/Fire/Ambulance)", "999"],
+                      ["Nearest Hospital (Hospital Temerloh)", "+60 9-296 1211"],
+                    ].map(([label, num]) => (
+                      <div key={label} className="flex justify-between">
+                        <span className="text-muted-foreground">{label}</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground font-medium">{num}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── BROWSE ── */}
         {tab === "browse" && (
           <div>
@@ -566,7 +704,6 @@ export function CustomerDashboard({ userName, userEmail, onLogout, campsites, ac
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><AlertCircleIcon size={11} /> Vehicle plate and count are mandatory for site access.</p>
-                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1"><AlertCircleIcon size={11} /> If more than 1 vehicle is present, please put a coma in between the number plates, ex:ABC123, DEF4556.</p>
                 <div className="bg-muted rounded-lg p-4 mt-5 flex items-center justify-between">
                   <div><p className="text-sm text-muted-foreground">{nights} night{nights>1?"s":""} · {form.guests} pax</p>
                     <p style={{ fontFamily: "'DM Mono',monospace" }} className="text-foreground">RM {siteCost}.00 site</p></div>
